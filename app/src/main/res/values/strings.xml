@@ -2,5 +2,7 @@
     <string name="app_name">projectFinal</string>
     <string name="title_location_permission">title_location_permission</string>
     <string name="text_location_permission">text_location_permission</string>
+    <string name="title_write_ext_permission">title_write_ext_permission</string>
+    <string name="text_write_ext_permission">text_write_ext_permission</string>
     <string name="ok">ok</string>
 </resources>

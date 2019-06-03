@@ -8,9 +8,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.AsyncTask;
+import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -22,8 +24,11 @@ import android.widget.TextView;
 
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class coordonates extends AppCompatActivity {
@@ -53,16 +58,79 @@ public class coordonates extends AppCompatActivity {
         }
     }
 
+    private void saveImage(Bitmap imageBitmap){
+        String root = Environment.getExternalStorageDirectory().toString();
+        File myDir = new File(root + "/saved_images");
+        myDir.mkdirs();
+        SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy");
+        String fileName = format.format(new Date());
+        File file = new File(myDir, fileName+".jpg");
+        if (file.exists ()) file.delete ();
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            imageBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
+            out.flush();
+            out.close();
+            System.out.println("saved to: "+myDir.toString()+"/"+fileName);
+
+        } catch (Exception e) {
+            System.out.println("Erreur: "+e.toString());
+        }
+    }
+    public static final int MY_PERMISSIONS_REQUEST_WRITE = 99;
+
+    public  boolean isStoragePermissionGranted() {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.text_write_ext_permission)
+                        .setMessage(R.string.text_location_permission)
+                        .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                //Prompt the user once explanation has been shown
+                                ActivityCompat.requestPermissions(coordonates.this,
+                                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                        MY_PERMISSIONS_REQUEST_LOCATION);
+                            }
+                        })
+                        .create()
+                        .show();
+
+
+            } else {
+                // No explanation needed, we can request the permission.
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                        MY_PERMISSIONS_REQUEST_WRITE);
+            }
+            return false;
+        } else {
+            return true;
+
+
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_coordonates);
-
+        final ImageView image = findViewById(R.id.imV2);
 
         new Thread(new Runnable() {
             public void run() {
                 TextView textView = findViewById(R.id.infoTextView);
-                ImageView image = findViewById(R.id.imV2);
+
                 double longitude = 10.1657900;
                 double latitude = 36.8189700;
 
@@ -107,7 +175,36 @@ public class coordonates extends AppCompatActivity {
                 finish();
             }
         });
+        final Button saveWeatherBtn = findViewById(R.id.saveWeatherBtn);
+        saveWeatherBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
 
+                try{
+
+
+                    BitmapDrawable drawable = (BitmapDrawable) image.getDrawable();
+                    Bitmap bitmap= drawable.getBitmap();
+                    if(isStoragePermissionGranted()){
+                        saveImage(bitmap);
+                    }else{
+                        System.out.println("no permission");
+                    }
+                    /*Intent intent = new Intent(getApplicationContext(),SaveImageOftheDay.class);
+                    ByteArrayOutputStream bStream = new ByteArrayOutputStream();
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 50, bStream);
+                    byte[] byteArray = bStream.toByteArray();
+                    intent.putExtra("image", byteArray);
+                    startService(intent);*/
+
+                }catch(Exception e){
+                    System.out.print("Error: "+e.toString()+"\n");
+                }
+
+
+
+            }
+        });
 
 
 
