@@ -201,6 +201,9 @@ public class coordonates extends AppCompatActivity {
                         String path=saveImage(bitmap);
                         intentToAddweatherInformation.putExtra("path",path);
                         startService(intentToAddweatherInformation);
+                        Intent intentToUserLog = new Intent("com.codinginflow.SAVE_USER_ACTIVITY");
+                        intentToUserLog.putExtra("activity","saving Weather Image to: "+path);
+                        sendBroadcast(intentToUserLog);
                     }else{
                         System.out.println("no permission");
                     }

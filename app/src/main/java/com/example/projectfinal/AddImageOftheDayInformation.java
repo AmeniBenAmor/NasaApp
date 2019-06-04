@@ -33,10 +33,11 @@ public class AddImageOftheDayInformation extends Service {
         Log.i("Service","information: "+information);
         Log.i("Service","path: "+path);
         ImageOfTheDayDataBaseHelper helper =new  ImageOfTheDayDataBaseHelper(getApplicationContext());
-        Intent newIntent = new Intent(getApplicationContext(), ShowWeatherImages.class);
+        Intent newIntent = new Intent(getApplicationContext(), ShowAPODSvedImages.class);
 
         newIntent.putExtra("status",helper.addData(date,title,information,path));
         try {
+            Log.d("Hello","hi");
             newIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(newIntent);
 

@@ -2,8 +2,10 @@ package com.example.projectfinal;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -35,6 +37,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
+
+
 
     private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
         ImageView bmImage;
@@ -182,15 +186,15 @@ public class MainActivity extends AppCompatActivity {
                     try{
                         textArea.setText(json.getString("title"));
                         new DownloadImageTask(image).execute(json.getString("url"));
-                        //intentToAddImageOfTheDAy.putExtra("date");
+                        intentToAddImageOfTheDAy.putExtra("date",json.getString("date"));
+                        intentToAddImageOfTheDAy.putExtra("title",json.getString("title"));
+                        intentToAddImageOfTheDAy.putExtra("information",json.getString("explanation"));
                     }
                     catch (Exception e){
-                        System.out.println("Error: "+e.toString());
+                        Log.e("MainActivty",e.toString());
                         textArea.setText("there's problem with the serveur");
                     }
-
                 }
-
                 else textArea.setText("there's problem with the serveur");
             }
         }).start();
@@ -211,12 +215,8 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-
-
-
-
-        final Button saveWeatherBtn = findViewById(R.id.saveIMG);
-        saveWeatherBtn.setOnClickListener(new View.OnClickListener() {
+        final Button saveAPODImageBtn = findViewById(R.id.saveIMG);
+        saveAPODImageBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try{
@@ -225,19 +225,40 @@ public class MainActivity extends AppCompatActivity {
                     Bitmap bitmap= drawable.getBitmap();
                     if(isStoragePermissionGranted()){
                         String path=saveImage(bitmap);
+                        intentToAddImageOfTheDAy.putExtra("path",path);
+                        startService(intentToAddImageOfTheDAy);
+                        Intent intentToUserLog = new Intent("com.codinginflow.SAVE_USER_ACTIVITY");
+                        intentToUserLog.putExtra("activity","saving APOD Image: "+path);
+                        sendBroadcast(intentToUserLog);
 
                     }else{
-                        System.out.println("no permission");
+                        Log.e("MainActivity","Storage permission not granted");
+
                     }
 
                 }catch(Exception e){
-                    System.out.print("Error: "+e.toString()+"\n");
+                    Log.e("MainActivty",e.toString());
                 }
 
             }
         });
 
+        final Button galleryBtn = findViewById(R.id.galleryBtn);
+        galleryBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent galleryIntent = new Intent(getApplicationContext(),ShowAPODSvedImages.class);
+                startActivity(galleryIntent);
+            }
+        });
+
     }
 
-
+    @Override
+    protected void onStart() {
+        super.onStart();
+        IntentFilter filter = new IntentFilter("com.codinginflow.SAVE_USER_ACTIVITY");
+        UserActivityLogBroadcastReceiver broadcastReceiver = new UserActivityLogBroadcastReceiver();
+        registerReceiver(broadcastReceiver, filter);
+    }
 }
