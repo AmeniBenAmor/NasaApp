@@ -14,10 +14,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ShowImages"></activity>
+        <service
+            android:name=".AddWeatherImageInformation"
+            android:enabled="true"
+            android:exported="true"></service>
+
+        <activity android:name=".ShowWeatherImages" />
 
         <service
-            android:name=".SaveImageOftheDay"
+            android:name=".AddImageOftheDayInformation"
             android:enabled="true"
             android:exported="true" />
 

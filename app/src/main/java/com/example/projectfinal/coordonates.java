@@ -17,17 +17,18 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -58,9 +59,9 @@ public class coordonates extends AppCompatActivity {
         }
     }
 
-    private void saveImage(Bitmap imageBitmap){
+    private String saveImage(Bitmap imageBitmap){
         String root = Environment.getExternalStorageDirectory().toString();
-        File myDir = new File(root + "/saved_images");
+        File myDir = new File(root + "/saved_images/WeatherImages");
         myDir.mkdirs();
         SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy");
         String fileName = format.format(new Date());
@@ -71,10 +72,13 @@ public class coordonates extends AppCompatActivity {
             imageBitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
             out.flush();
             out.close();
-            System.out.println("saved to: "+myDir.toString()+"/"+fileName);
+            Toast.makeText(getApplicationContext(),"saved to: \n"+"saved_images/WeatherImages/"+fileName+".jpg",Toast.LENGTH_SHORT).show();
+            Log.i("Files", "saved to: "+myDir.toString()+fileName+".jpg");
+            return file.getAbsolutePath();
 
         } catch (Exception e) {
-            System.out.println("Erreur: "+e.toString());
+            Log.e("Files",e.toString());
+            return null;
         }
     }
     public static final int MY_PERMISSIONS_REQUEST_WRITE = 99;
@@ -126,10 +130,13 @@ public class coordonates extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_coordonates);
         final ImageView image = findViewById(R.id.imV2);
+        final TextView textView = findViewById(R.id.infoTextView);
+        final Intent intentToAddweatherInformation = new Intent(getApplicationContext(),AddWeatherImageInformation.class);
+
 
         new Thread(new Runnable() {
             public void run() {
-                TextView textView = findViewById(R.id.infoTextView);
+
 
                 double longitude = 10.1657900;
                 double latitude = 36.8189700;
@@ -156,6 +163,11 @@ public class coordonates extends AppCompatActivity {
                         String informations= "in this day in 2016\ncloud score: "+json.getInt("cloud_score")+
                                 "\ndate: "+json.getString("date")+
                                 "\nlatitude: "+latitude+"\nlongitude: "+longitude;
+                        intentToAddweatherInformation.putExtra("date",json.getString("date"));
+                        intentToAddweatherInformation.putExtra("cloud_score",Integer.toString(json.getInt("cloud_score")));
+                        intentToAddweatherInformation.putExtra("latitude",Double.toString(latitude));
+                        intentToAddweatherInformation.putExtra("longitude",Double.toString(longitude));
+
                         textView.setText(informations);
                         new DownloadImageTask(image).execute(json.getString("url"));
                     }
@@ -172,7 +184,8 @@ public class coordonates extends AppCompatActivity {
         homeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                finish();
+                Intent intent = new Intent(getApplicationContext(), ShowWeatherImages.class);
+                startActivity(intent);
             }
         });
         final Button saveWeatherBtn = findViewById(R.id.saveWeatherBtn);
@@ -182,20 +195,15 @@ public class coordonates extends AppCompatActivity {
 
                 try{
 
-
                     BitmapDrawable drawable = (BitmapDrawable) image.getDrawable();
                     Bitmap bitmap= drawable.getBitmap();
                     if(isStoragePermissionGranted()){
-                        saveImage(bitmap);
+                        String path=saveImage(bitmap);
+                        intentToAddweatherInformation.putExtra("path",path);
+                        startService(intentToAddweatherInformation);
                     }else{
                         System.out.println("no permission");
                     }
-                    /*Intent intent = new Intent(getApplicationContext(),SaveImageOftheDay.class);
-                    ByteArrayOutputStream bStream = new ByteArrayOutputStream();
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 50, bStream);
-                    byte[] byteArray = bStream.toByteArray();
-                    intent.putExtra("image", byteArray);
-                    startService(intent);*/
 
                 }catch(Exception e){
                     System.out.print("Error: "+e.toString()+"\n");

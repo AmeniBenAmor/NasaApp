@@ -16,6 +16,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -60,9 +61,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void saveImage(Bitmap imageBitmap){
+    private String saveImage(Bitmap imageBitmap){
         String root = Environment.getExternalStorageDirectory().toString();
-        File myDir = new File(root + "/saved_images");
+        File myDir = new File(root + "/saved_images/imageOfTheDay");
         myDir.mkdirs();
         SimpleDateFormat format = new SimpleDateFormat("dd-MM-yyyy");
         String fileName = format.format(new Date());
@@ -74,9 +75,12 @@ public class MainActivity extends AppCompatActivity {
             out.flush();
             out.close();
             System.out.println("saved to: "+myDir.toString()+fileName);
+            Log.d("Files", "saved to: "+myDir.toString()+fileName);
+            return file.getAbsolutePath();
 
         } catch (Exception e) {
             System.out.println("Erreur: "+e.toString());
+            return null;
         }
     }
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
@@ -155,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        final Intent intentToAddImageOfTheDAy = new Intent(getApplicationContext(),AddImageOftheDayInformation.class);
         if (android.os.Build.VERSION.SDK_INT > 9)
         {
             StrictMode.ThreadPolicy policy = new
@@ -177,14 +182,16 @@ public class MainActivity extends AppCompatActivity {
                     try{
                         textArea.setText(json.getString("title"));
                         new DownloadImageTask(image).execute(json.getString("url"));
+                        //intentToAddImageOfTheDAy.putExtra("date");
                     }
                     catch (Exception e){
-                        textArea.setText("null");
+                        System.out.println("Error: "+e.toString());
+                        textArea.setText("there's problem with the serveur");
                     }
 
                 }
 
-                else textArea.setText("null");
+                else textArea.setText("there's problem with the serveur");
             }
         }).start();
 
@@ -199,39 +206,36 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+
+
+
+
+
+
+
+
         final Button saveWeatherBtn = findViewById(R.id.saveIMG);
         saveWeatherBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 try{
-
 
                     BitmapDrawable drawable = (BitmapDrawable) image.getDrawable();
                     Bitmap bitmap= drawable.getBitmap();
                     if(isStoragePermissionGranted()){
-                        saveImage(bitmap);
+                        String path=saveImage(bitmap);
+
                     }else{
                         System.out.println("no permission");
                     }
-                    /*Intent intent = new Intent(getApplicationContext(),SaveImageOftheDay.class);
-                    ByteArrayOutputStream bStream = new ByteArrayOutputStream();
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 50, bStream);
-                    byte[] byteArray = bStream.toByteArray();
-                    intent.putExtra("image", byteArray);
-                    startService(intent);*/
 
                 }catch(Exception e){
                     System.out.print("Error: "+e.toString()+"\n");
                 }
 
-
-
             }
         });
-
-
-
 
     }
 
